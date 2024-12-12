@@ -8,8 +8,16 @@ var pushButton = new Gpio(529, 'in', 'both'); //use GPIO pin 17 as input, and 'b
 http.listen(8080); //listen to port 8080
 
 function handler (req, res) { //create server
+
     if (req.url == '/') { req.url = '/index.html'; }
-    fs.readFile(__dirname + '/public' + req.url, 'utf8', function(err, data) { //read file index.html in public folder
+
+    encoding = '';
+    if (req.url.match(/.html$/) || req.url.match(/.css$/)) {
+      encoding = 'utf8';
+    }
+
+    fs.readFile(__dirname + '/public' + req.url, encoding, function(err, data) { //read file in public folder
+
     if (err) {
       res.writeHead(404, {'Content-Type': 'text/html'}); //display 404 on error
       return res.end("404 Not Found");
@@ -17,7 +25,6 @@ function handler (req, res) { //create server
     // Match queries for html files
     if (req.url.match(/.html$/)) {
       if (LED.readSync() == 0) {
-        console.log(data);
         data = data.replace("checked_placeholder ", "");
       }
       else {
