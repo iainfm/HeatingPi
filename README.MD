@@ -61,3 +61,17 @@ pm2 start webserver.js
 pm2 save
 pm2 status
 ```
+
+# Connect the relay module
+
+**These are the way *my* module works. Always check the wiring instructions to lower the risk of damage to your devices (or you).**
+
+|Rasperry Pi Pin|Description|Relay Module Pin|
+|-|-|-|
+|2|+5V|DC+|
+|6|GND|DC-|
+|7|GPIO 4|IN|
+
+For external switch control, wire a suitable SPST latching switch between GPIO 17 (Pin 11) and [3.3V | GND] and a XXXR resistor beweeen GPIO17 (Pin 11) and [3.3V | GND]*
+
+*tbc

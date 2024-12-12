@@ -9,13 +9,20 @@ http.listen(8080); //listen to port 8080
 
 function handler (req, res) { //create server
     if (req.url == '/') { req.url = '/index.html'; }
-    fs.readFile(__dirname + '/public' + req.url, function(err, data) { //read file index.html in public folder
+    fs.readFile(__dirname + '/public' + req.url, 'utf8', function(err, data) { //read file index.html in public folder
     if (err) {
       res.writeHead(404, {'Content-Type': 'text/html'}); //display 404 on error
       return res.end("404 Not Found");
     }
     // Match queries for html files
     if (req.url.match(/.html$/)) {
+      if (LED.readSync() == 0) {
+        console.log(data);
+        data = data.replace("checked_placeholder ", "");
+      }
+      else {
+        data = data.replace("checked_placeholder", "checked");
+      }
       res.writeHead(200, {'Content-Type': 'text/html'}); //write HTML
     }
     // Match queries for css files
