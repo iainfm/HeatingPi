@@ -9,3 +9,55 @@ Credits:
 ## Build process
 
 Install Raspbery OS on a suitable device (Pi Zero upwards)
+Install any updates and reboot if required
+```
+sudo apt update
+sudo apt upgrade
+sudo reboot
+```
+Install node and npm
+```
+sudo apt install nodejs
+sudo apt install npm
+```
+Check installation and versions
+```
+npm -v
+node -v
+```
+
+Create a parent folder to hold the project files (optional)
+```
+mkdir ~/git
+```
+Clone the repo into it
+```
+cd ~/git
+git clone https://github.com/iainfm/HeatingPi.git
+```
+
+Install node modules
+```
+cd HeatingPi
+npm init -y
+npm install socket.io
+npm install onoff
+npm install pigpio
+sudo npm install pm2 -g # optional - only if you want to use this to control run on boot etc
+```
+
+
+Test the server
+```
+node webserver.js
+```
+## Install to run on boot (optional)
+```
+pm2 startup
+# The next line will be returned by the first
+sudo env PATH=$PATH:/usr/bin /usr/local/lib/node_modules/pm2/bin/pm2 startup systemd -u <user> --hp <path>
+cd <folder containing webserver.js>
+pm2 start webserver.js
+pm2 save
+pm2 status
+```
