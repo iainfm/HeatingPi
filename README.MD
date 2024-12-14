@@ -73,3 +73,13 @@ pm2 status
 |7|GPIO 4|IN|
 
 For external switch control, wire a suitable SPST latching switch between GPIO 17 (Pin 11) and [3.3V | GND] with (optionally) a ~470R resistor in series to prevent accidental current-related issues.
+
+# Automatic Scheduling
+
+Simplest, but least user-friendly option is to use cron. Set your on-off schedule and use the commands in cron_on/cron_off as the task to run.
+
+# Credits
+
+[W3Schools](https://www.w3schools.com/nodejs/nodejs_raspberrypi_webserver_websocket.asp) for the basis of the webserver code.
+
+(TBC) for the favicon.
