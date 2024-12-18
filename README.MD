@@ -82,4 +82,4 @@ Simplest, but least user-friendly option is to use cron. Set your on-off schedul
 
 [W3Schools](https://www.w3schools.com/nodejs/nodejs_raspberrypi_webserver_websocket.asp) for the basis of the webserver code.
 
-Icons by [Icons8](blob:https://icons8.com/68c5c77f-a6e0-4a65-b12f-34aec10e97ba).
+Icons by [Icons8](https://icons8.com/).
