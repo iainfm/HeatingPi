@@ -82,4 +82,4 @@ Simplest, but least user-friendly option is to use cron. Set your on-off schedul
 
 [W3Schools](https://www.w3schools.com/nodejs/nodejs_raspberrypi_webserver_websocket.asp) for the basis of the webserver code.
 
-(TBC) for the favicon.
+Icons by [Icons8](https://icons8.com/).
