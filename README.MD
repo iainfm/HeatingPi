@@ -72,7 +72,7 @@ pm2 status
 |6|GND|DC-|
 |7|GPIO 4|IN|
 
-For external switch control, wire a suitable SPST latching switch between GPIO 17 (Pin 11) and [3.3V | GND] with (optionally) a ~470R resistor in series to prevent accidental current-related issues.
+For external switch control, wire a suitable SPST non-latching switch between GPIO 17 (Pin 11) and 3.3V with a ~4.7K pulldown resistor between GPIO17 and GND.
 
 # Automatic Scheduling
 

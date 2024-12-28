@@ -1,30 +1,75 @@
 var http = require('http').createServer(handler); //require http server, and create server with function handler()
-var fs = require('fs'); //require filesystem module
-var io = require('socket.io')(http) //require socket.io module and pass the http object (server)
-var Gpio = require('onoff').Gpio; //include onoff to interact with the GPIO
-var LED = new Gpio(516, 'low'); //use GPIO pin 4 as output // Start in the off (NO) state
-var pushButton = new Gpio(529, 'in', 'both'); //use GPIO pin 17 as input, and 'both' button presses, and releases should be handled
+var fs = require('fs'); // Require filesystem module
+var io = require('socket.io')(http) // Require socket.io module and pass the http object (server)
+var Gpio = require('onoff').Gpio; // Include onoff to interact with the GPIO
+var OP = new Gpio(516, 'low'); // Use GPIO pin 4 as output (OP) // Start in the off state
+var pushButton = new Gpio(529, 'in', 'falling'); // Use GPIO pin 17 as input, and 'both' button presses, and releases should be handled
 
-http.listen(8080); //listen to port 8080
+// Variable definitions
+var http_port = 8080;
+var timers = [];
+var timeout = 100; // Timer timeout in ms
+var mysocket;
 
-function handler (req, res) { //create server
+// Start the http server
+http.listen(http_port);
 
-    if (req.url == '/') { req.url = '/index.html'; }
+// Function to toggle the GPIO output
+var fn_toggle_output = function toggle_output()  {
+  value = OP.readSync();
+  OP.writeSync( 1 - value ); // Toggle output
+  if (typeof(mysocket) != 'undefined') {
+    try {
+      mysocket.emit('light', 1 - value); // Send button status to client
+    }
+    catch (e) {
+      console.log('Error: ', e);
+    }
+  }
+};
+
+// Watch for hardware interrupts on pushButton
+pushButton.watch(function (err, value) {
+
+  if (err) { // handle any errors generated
+    console.error('There was an error', err); //output error message to console
+    return;
+  }
+
+  // Debounce any spurious inputs by setting a new timer to toggle the output
+  timers.push(setTimeout(fn_toggle_output, timeout));
+
+  // Clear all old timers
+  for (var i = 0; i < (timers.length) - 1; i++) {
+    clearTimeout(timers[i]);
+  }
+
+  // Then clear the timer array
+  timers = [];
+  
+});
+
+function handler (req, res) { // Create server
+
+  req.url.replace(/\.\.\//g,'') // Prevent directory escape
+
+  if (req.url == '/') { req.url = '/index.html'; }
 
     encoding = '';
     if (req.url.match(/.html$/) || req.url.match(/.css$/)) {
       encoding = 'utf8';
     }
 
-    fs.readFile(__dirname + '/public' + req.url, encoding, function(err, data) { //read file in public folder
+    fs.readFile(__dirname + '/public' + req.url, encoding, function(err, data) { // Read file in public folder
 
     if (err) {
-      res.writeHead(404, {'Content-Type': 'text/html'}); //display 404 on error
+      res.writeHead(404, {'Content-Type': 'text/html'}); // Display 404 on error
       return res.end("404 Not Found");
     }
+
     // Match queries for html files
     if (req.url.match(/.html$/)) {
-      if (LED.readSync() == 0) {
+      if (OP.readSync() == 0) {
         data = data.replace("checked_placeholder ", "");
       }
       else {
@@ -32,37 +77,34 @@ function handler (req, res) { //create server
       }
       res.writeHead(200, {'Content-Type': 'text/html'}); //write HTML
     }
+
     // Match queries for css files
     else if (req.url.match(/.css$/)) {
       res.writeHead(200, {'Content-Type': 'text/css'}); //write CSS
     }
-    res.write(data); //write data from index.html
+
+    res.write(data); // Return data to client
+
     return res.end();
   });
 }
 
-io.sockets.on('connection', function (socket) {// WebSocket Connection
-  var lightvalue = 0; //static variable for current status
-  /* pushButton.watch(function (err, value) { //Watch for hardware interrupts on pushButton
-    if (err) { //if an error
-      console.error('There was an error', err); //output error message to console
-      return;
-    }
-    lightvalue = value;
-    socket.emit('light', lightvalue); //send button status to client
-  });*/
-  socket.on('light', function(data) { //get light switch status from client
-    lightvalue = data; //invert value
-    // console.log(lightvalue, LED.readSync());
-    if (lightvalue != LED.readSync()) { //only change LED if status has changed
-      LED.writeSync(lightvalue); //turn LED on or off
+io.sockets.on('connection', function (socket) { // WebSocket Connection
+  lightvalue = 0; // static variable for current status
+  mysocket = socket;
+
+  socket.on('light', function(data) { // Get light switch status from client
+    lightvalue = data; // Invert value
+
+    if (lightvalue != OP.readSync()) { // Only change OP if status has changed
+      OP.writeSync(lightvalue); // Turn OP on or off
     }
   });
 });
 
 process.on('SIGINT', function () { //on ctrl+c
-  LED.writeSync(0); // Turn LED off
-  LED.unexport(); // Unexport LED GPIO to free resources
+  OP.writeSync(0); // Turn output off
+  OP.unexport(); // Unexport output GPIO to free resources
   pushButton.unexport(); // Unexport Button GPIO to free resources
-  process.exit(); //exit completely
+  process.exit(); // Exit completely
 });
