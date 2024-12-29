@@ -3,40 +3,46 @@ var fs = require('fs'); // Require filesystem module
 var io = require('socket.io')(http) // Require socket.io module and pass the http object (server)
 var Gpio = require('onoff').Gpio; // Include onoff to interact with the GPIO
 var OP = new Gpio(516, 'low'); // Use GPIO pin 4 as output (OP) // Start in the off state
-var pushButton = new Gpio(529, 'in', 'falling'); // Use GPIO pin 17 as input, and 'both' button presses, and releases should be handled
+var pushButton = new Gpio(529, 'in', 'rising'); // Use GPIO pin 17 as input, and 'both' button presses, and releases should be handled
 
 // Variable definitions
 var http_port = 8080;
 var timers = [];
-var timeout = 100; // Timer timeout in ms
-var mysocket;
+var timeout = 500; // Timer timeout in ms
+var mysockets = [];
 
 // Start the http server
 http.listen(http_port);
 
 // Function to toggle the GPIO output
 var fn_toggle_output = function toggle_output()  {
+  // console.log('Toggling output');
+
   value = OP.readSync();
   OP.writeSync( 1 - value ); // Toggle output
-  if (typeof(mysocket) != 'undefined') {
-    try {
-      mysocket.emit('light', 1 - value); // Send button status to client
+
+  for (var mysocket of mysockets) {
+    if (typeof(mysocket) != 'undefined') {
+      try {
+        // console.log(1-value);
+        mysocket.emit('light', 1 - value); // Send button status to client
+      }
+      catch (e) {
+        console.log('Error: ', e);
+      }
     }
-    catch (e) {
-      console.log('Error: ', e);
-    }
-  }
-};
+  };
+} 
 
 // Watch for hardware interrupts on pushButton
 pushButton.watch(function (err, value) {
-
   if (err) { // handle any errors generated
     console.error('There was an error', err); //output error message to console
     return;
   }
 
   // Debounce any spurious inputs by setting a new timer to toggle the output
+  // console.log('Button pressed');
   timers.push(setTimeout(fn_toggle_output, timeout));
 
   // Clear all old timers
@@ -90,16 +96,31 @@ function handler (req, res) { // Create server
 }
 
 io.sockets.on('connection', function (socket) { // WebSocket Connection
+  // console.log('Client connected');
   lightvalue = 0; // static variable for current status
-  mysocket = socket;
+  mysockets.push(socket);
+  // console.log(mysockets.length);
 
   socket.on('light', function(data) { // Get light switch status from client
+    // console.log('client');
     lightvalue = data; // Invert value
 
     if (lightvalue != OP.readSync()) { // Only change OP if status has changed
       OP.writeSync(lightvalue); // Turn OP on or off
     }
+
+    for (var mysocket of mysockets) {
+      if (typeof(mysocket) != 'undefined') {
+        mysocket.emit('light', lightvalue); // Send button status to clients
+      }
+    };
+
   });
+});
+
+io.sockets.on('disconnect', function (socket) {
+  // console.log('Client disconnected');
+  mysockets.pop(socket);
 });
 
 process.on('SIGINT', function () { //on ctrl+c

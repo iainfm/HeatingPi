@@ -2,7 +2,7 @@
 <html>
   <head>
     <title>Central Heating</title>
-    <meta http-equiv="refresh" content="10">
+    <!--meta http-equiv="refresh" content="10"-->
     <!--meta name="viewport" content="width=device-width, initial-scale=1.0"--> 
     <link rel="stylesheet" type="text/css" href="style.css">
     <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
@@ -28,11 +28,14 @@ window.addEventListener("load", function(){ //when page loads
   var lightbox = document.getElementById("light");
   lightbox.addEventListener("change", function() { //add event listener for when checkbox changes
     socket.emit("light", Number(this.checked)); //send button status to server (as 1 or 0)
+    // console.log(this.checked);
   });
 });
 socket.on('light', function (data) { //get button status from client
-  document.getElementById("light").checked = data; //change checkbox according to push button on Raspberry Pi
-  socket.emit("light", data); //send push button status to back to server
+  if (document.getElementById("light").checked != data) {
+    document.getElementById("light").checked = data; //change checkbox according to push button on Raspberry Pi
+    socket.emit("light", data); //send push button status to back to server
+  }
 });
 </script>
 
