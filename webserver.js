@@ -101,6 +101,11 @@ io.sockets.on('connection', function (socket) { // WebSocket Connection
   mysockets.push(socket);
   // console.log(mysockets.length);
 
+  // Handle disconnects
+  socket.on('disconnect', function (socket) {
+    mysockets.pop(socket);
+  });
+
   socket.on('light', function(data) { // Get light switch status from client
     // console.log('client');
     lightvalue = data; // Invert value
@@ -118,10 +123,7 @@ io.sockets.on('connection', function (socket) { // WebSocket Connection
   });
 });
 
-io.sockets.on('disconnect', function (socket) {
-  // console.log('Client disconnected');
-  mysockets.pop(socket);
-});
+
 
 process.on('SIGINT', function () { //on ctrl+c
   OP.writeSync(0); // Turn output off
