@@ -102,8 +102,11 @@ io.sockets.on('connection', function (socket) { // WebSocket Connection
   // console.log(mysockets.length);
 
   // Handle disconnects
-  socket.on('disconnect', function (socket) {
-    mysockets.pop(socket);
+  socket.on('disconnect', function () {
+    index = mysockets.indexOf(socket);
+    if ( index > -1 ) {
+      mysockets.splice(index, 1);
+    }
   });
 
   socket.on('light', function(data) { // Get light switch status from client
